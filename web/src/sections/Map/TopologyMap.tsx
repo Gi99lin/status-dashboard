@@ -4,6 +4,7 @@ import '@xyflow/react/dist/style.css';
 import type { Topology } from '../../types';
 import { nodeTypes, edgeTypes } from './registry';
 import { buildGraph } from './layout';
+import { DEMO } from '../../lib/demo';
 
 const POSITIONS_KEY = 'status-map.node-positions';
 
@@ -32,7 +33,8 @@ export function TopologyMap({ topology }: { topology: Topology }) {
 
   useEffect(() => {
     const next = buildGraph(topology);
-    const saved = loadPositions();
+    // Demo always uses the clean auto-layout — never restore a visitor's drags.
+    const saved = DEMO ? {} : loadPositions();
     setNodes((prev) => {
       const prevById = new Map(prev.map((node) => [node.id, node]));
       return next.nodes.map((node) => {
@@ -47,7 +49,7 @@ export function TopologyMap({ topology }: { topology: Topology }) {
 
   function handleNodesChange(changes: Parameters<typeof onNodesChange>[0]) {
     onNodesChange(changes);
-    if (changes.some((change) => change.type === 'position' && change.dragging === false)) {
+    if (!DEMO && changes.some((change) => change.type === 'position' && change.dragging === false)) {
       setNodes((current) => {
         savePositions(current);
         return current;
@@ -73,7 +75,8 @@ export function TopologyMap({ topology }: { topology: Topology }) {
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
-        minZoom={0.3}
+        fitViewOptions={{ padding: 0.12 }}
+        minZoom={0.15}
         maxZoom={1.5}
         nodesConnectable={false}
         elementsSelectable={false}
