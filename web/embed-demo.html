@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>status-map · embed demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 24px;
+        background: #1a1f24;
+        font-family: Inter, system-ui, sans-serif;
+        color: #eaeff3;
+      }
+      h1 {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1rem;
+        margin-bottom: 16px;
+      }
+      status-map {
+        display: block;
+        max-width: 1500px;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>life-dashboard · demo host page</h1>
+    <!--
+      "api" points at the status-dashboard API (defaults to same-origin if omitted).
+      "period" is one of 10м / 1ч / 6ч / 24ч.
+    -->
+    <status-map api="http://localhost:3002" period="1ч"></status-map>
+    <script type="module" src="/dist-embed/status-map.js"></script>
+  </body>
+</html>

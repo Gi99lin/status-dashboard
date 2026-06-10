@@ -1,0 +1,31 @@
+services:
+  status-dashboard-api:
+    build: ./api
+    container_name: status-dashboard-api
+    restart: unless-stopped
+    env_file:
+      - ./api/.env
+    environment:
+      - PORT=3002
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - status_dashboard_network
+      - proxy_network
+
+  status-dashboard-web:
+    build: ./web
+    container_name: status-dashboard-web
+    restart: unless-stopped
+    depends_on:
+      - status-dashboard-api
+    networks:
+      - status_dashboard_network
+      - proxy_network
+
+networks:
+  status_dashboard_network:
+    driver: bridge
+  proxy_network:
+    external: true
+    name: my_server_proxy_network

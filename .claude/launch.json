@@ -1,0 +1,10 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    { "name": "mockup", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "4188"], "port": 4188 },
+    { "name": "api", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "cwd": "api", "port": 3002 },
+    { "name": "web", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev", "--", "--port", "5180"], "cwd": "web", "port": 5180 },
+    { "name": "embed-demo", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "4189"], "cwd": "web", "port": 4189 },
+    { "name": "web-demo", "runtimeExecutable": "python3", "runtimeArgs": ["-m", "http.server", "4190"], "cwd": "web/dist-demo", "port": 4190 }
+  ]
+}

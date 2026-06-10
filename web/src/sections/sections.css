@@ -1,0 +1,14 @@
+.ctable-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.ctable-empty { font-family: var(--mono); font-size: 0.62rem; color: var(--fg-muted); text-align: center; padding: 24px; }
+
+.ctable-tag {
+  font-family: var(--mono);
+  font-size: 0.46rem;
+  color: var(--blue);
+  border: 1px solid color-mix(in oklch, var(--blue) 30%, transparent);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.row { display: flex; justify-content: space-between; font-family: var(--mono); font-size: .63rem; color: var(--fg-muted); padding: 2px 0; }
+.row b { color: var(--fg-dim); font-weight: 600; }

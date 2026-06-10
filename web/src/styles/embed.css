@@ -1,0 +1,52 @@
+/* Base styles for the <status-map> shadow root.
+   Mirrors the parts of index.css/App.css needed outside the host page's global stylesheet. */
+:host {
+  all: initial;
+  display: block;
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--fg);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+.lbl {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.dot.up { background: var(--green); }
+.dot.warn { background: var(--yellow); }
+.dot.down { background: var(--red); }
+.dot.pulse { animation: pulse 2s infinite; }
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--green) 60%, transparent); }
+  50% { box-shadow: 0 0 0 4px transparent; }
+}
+
+.panel {
+  border: 1px solid var(--card-border);
+  border-radius: var(--r);
+  background: color-mix(in oklch, oklch(100% 0 0) 1.8%, transparent);
+}
+
+.wrap {
+  position: relative;
+}

@@ -1,0 +1,24 @@
+.ctable { padding: 14px; }
+
+.ctable-row {
+  display: grid;
+  grid-template-columns: 16px 1.6fr 1.2fr 1.4fr 60px 70px 1fr 70px 90px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px;
+  border-top: 1px solid var(--hair);
+  font-family: var(--mono);
+  font-size: 0.66rem;
+}
+.ctable-row:first-of-type { border-top: none; }
+.ctable-row:not(.ctable-row--head):hover { background: color-mix(in oklch, oklch(100% 0 0) 3%, transparent); }
+.ctable-row--head { padding-bottom: 6px; }
+.ctable-row--head .lbl { font-size: 0.56rem; }
+
+.ctable-name { display: flex; flex-direction: column; gap: 2px; font-weight: 700; color: var(--fg); }
+.ctable-name small { font-family: var(--mono); font-size: 0.5rem; font-weight: 500; color: var(--fg-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+
+.ctable-dim { color: var(--fg-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ctable-num { color: var(--fg-dim); text-align: right; }
+
+.ctable-nets { display: flex; flex-wrap: wrap; gap: 4px; }

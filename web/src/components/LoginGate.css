@@ -1,0 +1,80 @@
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 320px;
+  padding: 28px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  text-align: center;
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 0.9rem;
+  letter-spacing: 0.02em;
+}
+
+.login-brand .mk {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: 1px solid color-mix(in oklch, var(--green) 40%, transparent);
+  color: var(--green);
+}
+
+.login-brand b {
+  color: var(--green);
+}
+
+.login-input {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--fg);
+  background: color-mix(in oklch, oklch(100% 0 0) 4%, transparent);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  outline: none;
+}
+
+.login-input:focus {
+  border-color: color-mix(in oklch, var(--green) 50%, transparent);
+}
+
+.login-btn {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: var(--green);
+  border: 1px solid color-mix(in oklch, var(--green) 40%, transparent);
+  background: color-mix(in oklch, var(--green) 11%, transparent);
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.login-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.login-error {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  color: var(--red);
+}

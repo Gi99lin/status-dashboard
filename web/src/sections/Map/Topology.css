@@ -1,0 +1,142 @@
+/* ── TOP: host + live chart + 2 уникальные метрики ── */
+.top { display: grid; grid-template-columns: 300px minmax(0, 1fr) 172px; gap: 14px; margin-bottom: 16px; }
+.rcol { display: flex; flex-direction: column; gap: 12px; }
+.lcol { display: flex; flex-direction: column; gap: 12px; }
+
+.node .nm { display: flex; align-items: center; gap: 9px; font-family: var(--mono); font-size: 1rem; font-weight: 700; margin-bottom: 9px; }
+.node .row { display: flex; justify-content: space-between; font-family: var(--mono); font-size: .63rem; color: var(--fg-muted); padding: 2px 0; }
+.node .row b { color: var(--fg-dim); font-weight: 600; }
+
+.vc { display: flex; flex-direction: column; gap: 9px; padding: 13px 14px; }
+.vc .vr { display: grid; grid-template-columns: 42px 1fr 46px; align-items: center; gap: 9px; }
+.vc .vr .vl { font-family: var(--mono); font-size: .58rem; color: var(--fg-muted); text-transform: uppercase; }
+.vc .vr .vb { height: 6px; border-radius: 4px; background: color-mix(in oklch, oklch(100% 0 0) 6%, transparent); overflow: hidden; }
+.vc .vr .vb i { display: block; height: 100%; border-radius: 4px; }
+.vc .vr .vv { text-align: right; font-family: var(--mono); font-size: .72rem; font-weight: 700; }
+
+.livewrap { position: relative; padding: 14px; }
+.livewrap .lh { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; }
+.livewrap .leg { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: .56rem; color: var(--fg-muted); }
+.livewrap .leg i { width: 9px; height: 3px; border-radius: 2px; }
+.livechart { position: relative; height: 184px; }
+
+.scard { padding: 12px 14px; }
+.scard .sl { font-family: var(--mono); font-size: .55rem; letter-spacing: .1em; text-transform: uppercase; color: var(--fg-muted); }
+.scard .sv { font-family: var(--mono); font-size: 1.45rem; font-weight: 700; margin-top: 5px; display: flex; align-items: baseline; gap: 7px; }
+.scard .sv small { font-size: .62rem; font-weight: 500; color: var(--fg-muted); }
+.scard .sv.b { color: var(--blue); }
+
+/* ── TOPOLOGY HEADER ── */
+.topohead { display: flex; align-items: center; gap: 10px; margin: 4px 0 12px 2px; }
+.topohead .leg2 { margin-left: auto; display: flex; gap: 14px; }
+.topohead .leg2 span { display: flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: .54rem; color: var(--fg-muted); }
+
+/* ── TOPOLOGY CANVAS ── */
+.topo {
+  position: relative;
+  height: 560px;
+  border: 1px solid var(--card-border);
+  border-radius: var(--r);
+  overflow: hidden;
+  background:
+    radial-gradient(120% 120% at 50% 0%, color-mix(in oklch, var(--green) 5%, transparent), transparent 55%),
+    color-mix(in oklch, oklch(100% 0 0) 1.4%, transparent);
+}
+.topo .react-flow { width: 100%; height: 100%; }
+.topo.topo-loading { display: flex; align-items: center; justify-content: center; }
+
+.edge { stroke: color-mix(in oklch, oklch(100% 0 0) 16%, transparent); stroke-width: 1.4; fill: none; }
+.edge.flow { stroke: color-mix(in oklch, var(--green) 45%, transparent); stroke-dasharray: 4 7; animation: flow 1.1s linear infinite; }
+.edge.mon { stroke: color-mix(in oklch, var(--purple) 35%, transparent); stroke-dasharray: 2 6; }
+.edge.remote { stroke: color-mix(in oklch, var(--blue) 50%, transparent); stroke-dasharray: 5 4; animation: flow 1.1s linear infinite; }
+@keyframes flow { to { stroke-dashoffset: -22; } }
+
+/* ── NODES ── */
+.tnode {
+  min-width: 118px;
+  border: 1px solid var(--card-border);
+  border-radius: 11px;
+  background: color-mix(in oklch, var(--bg0) 86%, transparent);
+  backdrop-filter: blur(3px);
+  padding: 8px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: border-color .15s;
+}
+.tnode .th { display: flex; align-items: center; gap: 7px; }
+.tnode .tn { font-family: var(--mono); font-size: .74rem; font-weight: 700; }
+.tnode .tt { margin-left: auto; font-family: var(--mono); font-size: .46rem; color: var(--fg-muted); border: 1px solid var(--card-border); border-radius: 4px; padding: 1px 4px; }
+.tnode .tm { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: .52rem; color: var(--fg-muted); }
+.tnode.app { border-color: color-mix(in oklch, var(--green) 30%, transparent); }
+.tnode.app .tn { color: var(--green); }
+.tnode.ext { min-width: 0; background: transparent; border-style: dashed; }
+.tnode.ext .tn { color: var(--fg-muted); }
+.tnode .open { font-family: var(--mono); font-size: .5rem; color: var(--green); }
+
+.ring2 {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+  background: conic-gradient(var(--gc) calc(var(--p) * 1%), color-mix(in oklch, oklch(100% 0 0) 9%, transparent) 0);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: .42rem; color: var(--fg-dim); position: relative;
+}
+.ring2::before { content: ""; position: absolute; width: 15px; height: 15px; border-radius: 50%; background: var(--bg-dim); }
+.ring2 span { position: relative; }
+
+.net {
+  width: 100%;
+  border: 1px dashed color-mix(in oklch, var(--blue) 32%, transparent);
+  border-radius: 14px;
+  background: color-mix(in oklch, var(--blue) 4%, transparent);
+  padding: 11px;
+  transition: border-color .15s;
+  box-sizing: border-box;
+}
+.net.host-net { border-color: color-mix(in oklch, var(--orange) 32%, transparent); background: color-mix(in oklch, var(--orange) 4%, transparent); }
+.net .nlabel {
+  position: absolute; top: -8px; left: 13px;
+  font-family: var(--mono); font-size: .5rem; letter-spacing: .08em; color: var(--blue);
+  background: var(--bg-dim); padding: 1px 7px; border: 1px solid color-mix(in oklch, var(--blue) 30%, transparent); border-radius: 5px;
+  display: flex; gap: 5px;
+}
+.net.host-net .nlabel { color: var(--orange); border-color: color-mix(in oklch, var(--orange) 30%, transparent); }
+.net .nkind { opacity: .7; }
+
+.inode { border: 1px solid var(--card-border); border-radius: 9px; background: color-mix(in oklch, var(--bg0) 80%, transparent); padding: 7px 9px; display: flex; flex-direction: column; gap: 4px; }
+.inode .ih { display: flex; align-items: center; gap: 6px; }
+.inode .inm { font-family: var(--mono); font-size: .74rem; font-weight: 700; }
+.inode.app .inm { color: var(--green); }
+.inode .itt { margin-left: auto; font-family: var(--mono); font-size: .46rem; color: var(--fg-muted); border: 1px solid var(--card-border); border-radius: 4px; padding: 1px 4px; }
+.inode .im { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: .52rem; color: var(--fg-muted); }
+.inode .open { font-family: var(--mono); font-size: .5rem; color: var(--green); margin-left: auto; }
+.datarow { display: flex; gap: 7px; margin-top: 7px; }
+.datarow .inode { flex: 1; padding: 6px 8px; }
+.datarow .inm { font-size: .6rem; color: var(--blue); }
+
+.foot { font-family: var(--mono); font-size: .56rem; color: var(--fg-muted); margin-top: 16px; text-align: center; opacity: .75; }
+
+/* ── React Flow theme overrides ── */
+.topo .react-flow__node { width: max-content; }
+.topo .react-flow__edge-path { fill: none; }
+.topo .react-flow__controls {
+  background: color-mix(in oklch, var(--bg0) 86%, transparent);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: none;
+}
+.topo .react-flow__controls-button {
+  background: transparent;
+  border-bottom: 1px solid var(--card-border);
+  color: var(--fg-dim);
+  fill: var(--fg-dim);
+}
+.topo .react-flow__controls-button:hover { background: color-mix(in oklch, var(--green) 12%, transparent); }
+.topo .react-flow__controls-button svg { fill: currentColor; }
+.topo .react-flow__minimap {
+  background: color-mix(in oklch, var(--bg0) 86%, transparent);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+}
+.topo .react-flow__minimap-mask { fill: color-mix(in oklch, oklch(0% 0 0) 55%, transparent); }
+.topo .react-flow__attribution { display: none; }

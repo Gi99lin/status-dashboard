@@ -1,0 +1,40 @@
+services:
+  status-dashboard-api:
+    image: ghcr.io/gi99lin/status-dashboard-api:latest
+    container_name: status-dashboard-api
+    restart: unless-stopped
+    pull_policy: always
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    env_file:
+      - ./api/.env
+    environment:
+      - PORT=3002
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Опционально: конфиг nginx (Nginx Proxy Manager и т.п.) для парсинга публичных URL —
+      # путь должен совпадать с NGINX_CONF_PATH в api/.env
+      # - /path/to/nginx.conf:/nginx/proxy.conf:ro
+    networks:
+      - status_dashboard_network
+      - proxy_network
+
+  status-dashboard-web:
+    image: ghcr.io/gi99lin/status-dashboard-web:latest
+    container_name: status-dashboard-web
+    restart: unless-stopped
+    pull_policy: always
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    depends_on:
+      - status-dashboard-api
+    networks:
+      - status_dashboard_network
+      - proxy_network
+
+networks:
+  status_dashboard_network:
+    driver: bridge
+  proxy_network:
+    external: true
+    name: my_server_proxy_network

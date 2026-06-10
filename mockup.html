@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>status_dashboard — макет (карта стека)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg-dim:oklch(13% 0.015 245); --bg0:oklch(16% 0.017 245);
+    --green:#59be6c; --aqua:#5dc0a7; --blue:#69aed5; --yellow:#e2c162; --orange:#e99355; --purple:#c88ec3; --red:#e3645e;
+    --fg:#eaeff3; --fg-dim:#a3acb3; --fg-muted:#727c84;
+    --mono:'JetBrains Mono','IBM Plex Mono',ui-monospace,Menlo,monospace;
+    --card-bg:color-mix(in oklch, oklch(100% 0 0) 4%, transparent);
+    --card-border:color-mix(in oklch, oklch(100% 0 0) 9%, transparent);
+    --hair:color-mix(in oklch, oklch(100% 0 0) 8%, transparent);
+    --r:13px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Inter,system-ui,sans-serif;color:var(--fg);background:var(--bg-dim);
+    background-image:linear-gradient(var(--hair) 1px,transparent 1px),linear-gradient(90deg,var(--hair) 1px,transparent 1px);
+    background-size:34px 34px;min-height:100vh}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(60% 50% at 88% 0%, color-mix(in oklch, var(--green) 9%, transparent), transparent 70%)}
+  .lbl{font-family:var(--mono);font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;color:var(--fg-muted)}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+  .dot.up{background:var(--green)} .dot.warn{background:var(--yellow)} .dot.down{background:var(--red)}
+  .dot.pulse{animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 color-mix(in oklch,var(--green) 60%,transparent)}50%{box-shadow:0 0 0 4px transparent}}
+
+  /* ── APP SHELL (новое: самостоятельное приложение) ── */
+  .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:18px;height:54px;padding:0 22px;
+    background:color-mix(in oklch,var(--bg-dim) 86%,transparent);backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--card-border)}
+  .brand{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-weight:700;font-size:.84rem;letter-spacing:.02em}
+  .brand .mk{display:grid;place-items:center;width:26px;height:26px;border-radius:7px;border:1px solid color-mix(in oklch,var(--green) 40%,transparent);color:var(--green)}
+  .brand b{color:var(--green)}
+  .nav{display:flex;gap:3px;margin-left:8px}
+  .nav a{font-family:var(--mono);font-size:.66rem;letter-spacing:.04em;color:var(--fg-muted);text-decoration:none;
+    padding:7px 13px;border-radius:8px;border:1px solid transparent;display:flex;align-items:center;gap:7px}
+  .nav a.active{color:var(--green);border-color:color-mix(in oklch,var(--green) 40%,transparent);background:color-mix(in oklch,var(--green) 11%,transparent)}
+  .nav a.soon{opacity:.5}
+  .nav a .pill{font-size:.46rem;border:1px solid var(--card-border);border-radius:4px;padding:1px 4px;color:var(--fg-muted)}
+  .tb-right{margin-left:auto;display:flex;align-items:center;gap:14px}
+  .host-pill{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.62rem;color:var(--fg-dim);
+    border:1px solid var(--card-border);border-radius:8px;padding:6px 11px}
+  .host-pill b{color:var(--fg)}
+  .periods{display:flex;gap:4px}
+  .pbtn{font-family:var(--mono);font-size:.6rem;color:var(--fg-muted);padding:5px 10px;border:1px solid var(--card-border);border-radius:7px;background:transparent;cursor:pointer}
+  .pbtn.active{color:var(--green);border-color:color-mix(in oklch,var(--green) 55%,transparent);background:color-mix(in oklch,var(--green) 12%,transparent)}
+
+  .wrap{max-width:1500px;margin:0 auto;padding:20px 22px 56px;position:relative}
+  .panel{border:1px solid var(--card-border);border-radius:var(--r);background:color-mix(in oklch,oklch(100% 0 0) 1.8%,transparent);padding:14px}
+
+  /* ── summary strip ── */
+  .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+  .scard{padding:12px 14px}
+  .scard .sl{font-family:var(--mono);font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--fg-muted)}
+  .scard .sv{font-family:var(--mono);font-size:1.45rem;font-weight:700;margin-top:5px;display:flex;align-items:baseline;gap:7px}
+  .scard .sv small{font-size:.62rem;font-weight:500;color:var(--fg-muted)}
+  .scard .sv.g{color:var(--green)} .scard .sv.y{color:var(--yellow)} .scard .sv.b{color:var(--blue)}
+
+  /* ── TOP: host + live chart + 2 уникальные метрики ── */
+  .top{display:grid;grid-template-columns:300px minmax(0,1fr) 172px;gap:14px;margin-bottom:16px}
+  .rcol{display:flex;flex-direction:column;gap:12px}
+  .lcol{display:flex;flex-direction:column;gap:12px}
+  .node .nm{display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:1rem;font-weight:700;margin-bottom:9px}
+  .node .row{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.63rem;color:var(--fg-muted);padding:2px 0}
+  .node .row b{color:var(--fg-dim);font-weight:600}
+  .vc{display:flex;flex-direction:column;gap:9px;padding:13px 14px}
+  .vc .vr{display:grid;grid-template-columns:42px 1fr 46px;align-items:center;gap:9px}
+  .vc .vr .vl{font-family:var(--mono);font-size:.58rem;color:var(--fg-muted);text-transform:uppercase}
+  .vc .vr .vb{height:6px;border-radius:4px;background:color-mix(in oklch,oklch(100% 0 0) 6%,transparent);overflow:hidden}
+  .vc .vr .vb i{display:block;height:100%;border-radius:4px}
+  .vc .vr .vv{text-align:right;font-family:var(--mono);font-size:.72rem;font-weight:700}
+
+  .livewrap{position:relative}
+  .livewrap .lh{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+  .livewrap .leg{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.56rem;color:var(--fg-muted)}
+  .livewrap .leg i{width:9px;height:3px;border-radius:2px}
+  .livechart{position:relative;height:184px}
+
+  /* ── TOPOLOGY ── */
+  .topohead{display:flex;align-items:center;gap:10px;margin:4px 0 12px 2px}
+  .topohead .leg2{margin-left:auto;display:flex;gap:14px}
+  .topohead .leg2 span{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:.54rem;color:var(--fg-muted)}
+  .topo-controls{display:flex;gap:5px}
+  .topo-ctl{font-family:var(--mono);font-size:.6rem;color:var(--fg-muted);width:28px;height:24px;border:1px solid var(--card-border);border-radius:7px;background:transparent;cursor:pointer}
+  .topo-ctl.wide{width:auto;padding:0 9px}
+  .topo{position:relative;height:560px;border:1px solid var(--card-border);border-radius:var(--r);overflow:auto;background:
+    radial-gradient(120% 120% at 50% 0%, color-mix(in oklch,var(--green) 5%,transparent), transparent 55%),
+    color-mix(in oklch,oklch(100% 0 0) 1.4%,transparent)}
+  .topo-canvas{position:relative;width:1460px;height:560px}
+  .edges{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .edge{stroke:color-mix(in oklch,oklch(100% 0 0) 16%,transparent);stroke-width:1.4;fill:none}
+  .edge.flow{stroke:color-mix(in oklch,var(--green) 45%,transparent);stroke-dasharray:4 7;animation:flow 1.1s linear infinite}
+  .edge.mon{stroke:color-mix(in oklch,var(--purple) 35%,transparent);stroke-dasharray:2 6}
+  .edge.remote{stroke:color-mix(in oklch,var(--blue) 50%,transparent);stroke-dasharray:5 4;animation:flow 1.1s linear infinite}
+  @keyframes flow{to{stroke-dashoffset:-22}}
+
+  .tnode{position:absolute;transform:translate(-50%,-50%);min-width:118px;border:1px solid var(--card-border);
+    border-radius:11px;background:color-mix(in oklch,var(--bg0) 86%,transparent);backdrop-filter:blur(3px);
+    padding:8px 11px;display:flex;flex-direction:column;gap:5px;cursor:pointer;transition:border-color .15s,transform .15s}
+  .tnode:hover{border-color:color-mix(in oklch,var(--green) 50%,transparent);transform:translate(-50%,-50%) scale(1.04)}
+  .tnode .th{display:flex;align-items:center;gap:7px}
+  .tnode .tn{font-family:var(--mono);font-size:.74rem;font-weight:700}
+  .tnode .tt{margin-left:auto;font-family:var(--mono);font-size:.46rem;color:var(--fg-muted);border:1px solid var(--card-border);border-radius:4px;padding:1px 4px}
+  .tnode .tm{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:.52rem;color:var(--fg-muted)}
+  .tnode.app{border-color:color-mix(in oklch,var(--green) 30%,transparent)}
+  .tnode.app .tn{color:var(--green)}
+  .tnode.ext{min-width:0;background:transparent;border-style:dashed}
+  .tnode.ext .tn{color:var(--fg-muted)}
+  .tnode .open{font-family:var(--mono);font-size:.5rem;color:var(--green)}
+  .ring2{width:22px;height:22px;border-radius:50%;flex-shrink:0;background:conic-gradient(var(--gc) calc(var(--p)*1%),color-mix(in oklch,oklch(100% 0 0) 9%,transparent) 0);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.42rem;color:var(--fg-dim);position:relative}
+  .ring2::before{content:"";position:absolute;width:15px;height:15px;border-radius:50%;background:var(--bg-dim)}
+  .ring2 span{position:relative}
+  .net{position:absolute;width:268px;border:1px dashed color-mix(in oklch,var(--blue) 32%,transparent);border-radius:14px;
+    background:color-mix(in oklch,var(--blue) 4%,transparent);padding:11px;transition:border-color .15s}
+  .net.host-net{border-color:color-mix(in oklch,var(--orange) 32%,transparent);background:color-mix(in oklch,var(--orange) 4%,transparent)}
+  .net:hover{border-color:color-mix(in oklch,var(--blue) 55%,transparent)}
+  .net .nlabel{position:absolute;top:-8px;left:13px;font-family:var(--mono);font-size:.5rem;letter-spacing:.08em;color:var(--blue);
+    background:var(--bg-dim);padding:1px 7px;border:1px solid color-mix(in oklch,var(--blue) 30%,transparent);border-radius:5px;display:flex;gap:5px}
+  .net.host-net .nlabel{color:var(--orange);border-color:color-mix(in oklch,var(--orange) 30%,transparent)}
+  .net .nkind{opacity:.7}
+  .inode{border:1px solid var(--card-border);border-radius:9px;background:color-mix(in oklch,var(--bg0) 80%,transparent);padding:7px 9px;display:flex;flex-direction:column;gap:4px}
+  .inode .ih{display:flex;align-items:center;gap:6px}
+  .inode .inm{font-family:var(--mono);font-size:.74rem;font-weight:700}
+  .inode.app .inm{color:var(--green)}
+  .inode .itt{margin-left:auto;font-family:var(--mono);font-size:.46rem;color:var(--fg-muted);border:1px solid var(--card-border);border-radius:4px;padding:1px 4px}
+  .inode .im{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:.52rem;color:var(--fg-muted)}
+  .inode .open{font-family:var(--mono);font-size:.5rem;color:var(--green);margin-left:auto}
+  .datarow{display:flex;gap:7px;margin-top:7px}
+  .datarow .inode{flex:1;padding:6px 8px}
+  .datarow .inm{font-size:.6rem;color:var(--blue)}
+  .foot{font-family:var(--mono);font-size:.56rem;color:var(--fg-muted);margin-top:16px;text-align:center;opacity:.75}
+</style>
+</head>
+<body>
+
+<!-- ════ APP SHELL ════ -->
+<header class="topbar">
+  <div class="brand"><span class="mk">◇</span> stack<b>.map</b></div>
+  <nav class="nav">
+    <a class="active" href="#"><span class="dot up"></span>Карта</a>
+    <a href="#">Контейнеры</a>
+    <a href="#">Сети</a>
+    <a href="#">Сервисы</a>
+    <a class="soon" href="#">CI / CD <span class="pill">скоро</span></a>
+  </nav>
+  <div class="tb-right">
+    <span class="host-pill"><span class="dot up pulse"></span><b>gigglin-server</b> · online 21д</span>
+    <div class="periods"><button class="pbtn">10м</button><button class="pbtn active">1ч</button><button class="pbtn">6ч</button><button class="pbtn">24ч</button></div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ════ TOP: host node + vitals + live telemetry + 2 уникальные метрики ════ -->
+  <div class="top">
+    <div class="lcol">
+      <div class="panel node">
+        <div class="nm"><span class="dot up pulse"></span>gigglin-server</div>
+        <div class="row"><span>статус</span><b>online · up 21 день</b></div>
+        <div class="row"><span>железо</span><b>8 vCPU · 16 GB</b></div>
+        <div class="row"><span>ОС</span><b>Ubuntu 24.04 · Docker 27</b></div>
+        <div class="row"><span>контейнеров</span><b>14 · 13 активны</b></div>
+      </div>
+      <div class="panel vc">
+        <div class="vr"><span class="vl">CPU</span><div class="vb"><i style="width:24%;background:var(--green)"></i></div><span class="vv">24%</span></div>
+        <div class="vr"><span class="vl">RAM</span><div class="vb"><i style="width:64%;background:var(--yellow)"></i></div><span class="vv">64%</span></div>
+        <div class="vr"><span class="vl">Диск</span><div class="vb"><i style="width:68%;background:var(--yellow)"></i></div><span class="vv">68%</span></div>
+        <div class="vr"><span class="vl">Сеть</span><div class="vb"><i style="width:30%;background:var(--blue)"></i></div><span class="vv">0.8M</span></div>
+      </div>
+    </div>
+
+    <div class="panel livewrap">
+      <div class="lh">
+        <span class="lbl">Телеметрия хоста · 1ч</span>
+        <span class="leg" style="margin-left:auto"><i style="background:var(--green)"></i>CPU</span>
+        <span class="leg"><i style="background:var(--yellow)"></i>RAM</span>
+        <span class="leg"><i style="background:var(--blue)"></i>Сеть</span>
+      </div>
+      <div class="livechart">
+        <svg viewBox="0 0 1100 184" width="100%" height="100%" preserveAspectRatio="none" style="position:absolute;inset:0">
+          <g stroke="color-mix(in oklch,oklch(100% 0 0) 5%,transparent)" stroke-width="1">
+            <line x1="0" y1="46" x2="1100" y2="46"/><line x1="0" y1="92" x2="1100" y2="92"/><line x1="0" y1="138" x2="1100" y2="138"/>
+          </g>
+          <path d="M0,136 C70,128 110,100 180,114 C250,128 290,142 360,124 C440,106 470,136 560,122 C640,108 690,72 760,90 C850,110 910,128 980,104 C1040,88 1075,98 1100,92 L1100,184 L0,184 Z" fill="color-mix(in oklch,var(--green) 12%,transparent)"/>
+          <path d="M0,136 C70,128 110,100 180,114 C250,128 290,142 360,124 C440,106 470,136 560,122 C640,108 690,72 760,90 C850,110 910,128 980,104 C1040,88 1075,98 1100,92" fill="none" stroke="var(--green)" stroke-width="1.8"/>
+          <path d="M0,70 C100,68 170,72 270,69 C390,65 460,62 560,66 C680,70 780,64 900,67 C1000,69 1060,65 1100,66" fill="none" stroke="var(--yellow)" stroke-width="1.6"/>
+          <path d="M0,150 C50,126 90,160 150,142 C220,118 270,158 340,138 C420,116 470,156 540,136 C640,108 690,160 760,140 C860,112 930,154 1000,134 C1050,120 1080,142 1100,136" fill="none" stroke="var(--blue)" stroke-width="1.4" opacity="0.9"/>
+        </svg>
+        <span class="lbl" style="position:absolute;left:2px;top:2px;font-size:.5rem">100%</span>
+        <span class="lbl" style="position:absolute;left:2px;bottom:2px;font-size:.5rem">0</span>
+      </div>
+    </div>
+
+    <div class="rcol">
+      <div class="panel scard"><div class="sl">Docker-сетей</div><div class="sv b">9</div></div>
+      <div class="panel scard"><div class="sl">Публичных URL</div><div class="sv b">7 <small>· nginx</small></div></div>
+    </div>
+  </div>
+
+  <!-- ════ TOPOLOGY ════ -->
+  <div class="topohead">
+    <span class="lbl">Топология стека</span>
+    <span class="lbl" style="color:var(--green)">живая · поток = трафик · кольцо = нагрузка</span>
+    <div class="topo-controls">
+      <button class="topo-ctl">−</button><button class="topo-ctl">100</button><button class="topo-ctl">+</button><button class="topo-ctl wide">FULL</button>
+    </div>
+    <div class="leg2">
+      <span><span class="dot up"></span>работает</span>
+      <span><span class="dot warn"></span>idle</span>
+      <span><span class="dot down"></span>упал</span>
+    </div>
+  </div>
+
+  <div class="topo">
+    <div class="topo-canvas">
+      <svg class="edges" viewBox="0 0 1460 560" preserveAspectRatio="none">
+        <path class="edge flow" d="M74,260 L150,260"/>
+        <path class="edge flow" d="M245,260 C320,150 320,96 350,96"/>
+        <path class="edge flow" d="M245,260 C520,150 600,96 660,96"/>
+        <path class="edge flow" d="M245,260 C780,150 880,96 970,96"/>
+        <path class="edge flow" d="M245,260 C320,330 320,330 350,330"/>
+        <path class="edge flow" d="M245,260 C520,360 600,330 660,330"/>
+        <path class="edge flow" d="M245,260 C780,360 880,330 970,330"/>
+        <path class="edge flow" d="M245,260 C520,470 460,500 470,512"/>
+        <path class="edge llm" d="M918,96 C1090,96 1180,150 1230,150" style="stroke:color-mix(in oklch,var(--green) 40%,transparent);stroke-dasharray:4 7;animation:flow 1.1s linear infinite;fill:none"/>
+        <path class="edge mon" d="M1330,360 C1180,300 980,180 928,150"/>
+        <path class="edge mon" d="M1330,360 C1180,400 980,360 928,384"/>
+        <path class="edge mon" d="M1330,360 C1180,420 760,420 618,384"/>
+        <path class="edge remote" d="M628,354 C760,440 840,452 905,460"/>
+      </svg>
+
+      <!-- core / standalone -->
+      <div class="tnode ext" style="left:42px;top:260px"><div class="th"><span class="dot up"></span><span class="tn">🌐 Интернет</span></div></div>
+      <div class="tnode" style="left:188px;top:260px"><div class="th"><span class="dot up pulse"></span><span class="tn">nginx</span><span class="tt">proxy</span></div><div class="tm"><span class="ring2" style="--p:8;--gc:var(--green)"><span>0.4</span></span>NPM · TLS · 7 URL</div></div>
+      <div class="tnode ext" style="left:1300px;top:150px"><div class="th"><span class="dot up"></span><span class="tn">☁ внешние LLM</span></div><div class="tm" style="color:var(--fg-muted)">через OmniRoute</div></div>
+      <div class="tnode" style="left:1340px;top:360px"><div class="th"><span class="dot up pulse"></span><span class="tn">Netdata</span><span class="tt">obs</span></div><div class="tm" style="color:var(--purple)">наблюдает за всеми</div></div>
+      <div class="tnode" style="left:960px;top:462px"><div class="th"><span class="dot up"></span><span class="tn">🖥️ work-vm</span><span class="tt">RDP</span></div><div class="tm" style="color:var(--blue)">через Guacamole · <span class="open">↗ открыть</span></div></div>
+
+      <!-- row 1 -->
+      <div class="net" style="left:350px;top:24px">
+        <span class="nlabel"><span class="nkind">NET</span>librechat_default</span>
+        <div class="inode app"><div class="ih"><span class="dot up pulse"></span><span class="inm">LibreChat</span><span class="itt">Node</span></div><div class="im"><span class="ring2" style="--p:14;--gc:var(--green)"><span>14</span></span>672MB<span class="open">↗ открыть</span></div></div>
+        <div class="datarow">
+          <div class="inode"><div class="ih"><span class="dot up"></span><span class="inm">mongodb</span></div><div class="im">410MB</div></div>
+          <div class="inode"><div class="ih"><span class="dot up"></span><span class="inm">meili</span></div><div class="im">64MB</div></div>
+          <div class="inode"><div class="ih"><span class="dot up"></span><span class="inm">vectordb</span></div><div class="im">96MB</div></div>
+        </div>
+      </div>
+
+      <div class="net" style="left:660px;top:24px">
+        <span class="nlabel"><span class="nkind">NET</span>omniroute_default</span>
+        <div class="inode app"><div class="ih"><span class="dot up pulse"></span><span class="inm">OmniRoute</span><span class="itt">Go</span></div><div class="im"><span class="ring2" style="--p:3;--gc:var(--green)"><span>3</span></span>519MB<span class="open">↗ открыть</span></div></div>
+        <div class="datarow">
+          <div class="inode"><div class="ih"><span class="dot up"></span><span class="inm">postgres</span></div><div class="im">228MB</div></div>
+          <div class="inode"><div class="ih"><span class="dot up"></span><span class="inm">redis</span></div><div class="im">38MB</div></div>
+        </div>
+      </div>
+
+      <div class="net" style="left:970px;top:24px">
+        <span class="nlabel"><span class="nkind">NET</span>ai-testcase-generator_testcase_network</span>
+        <div class="inode app"><div class="ih"><span class="dot up pulse"></span><span class="inm">testcase-backend</span><span class="itt">Python</span></div><div class="im"><span class="ring2" style="--p:0;--gc:var(--green)"><span>0</span></span>113MB<span class="open">↗ открыть</span></div></div>
+        <div class="datarow">
+          <div class="inode"><div class="ih"><span class="dot up"></span><span class="inm">testcase-db</span></div><div class="im">19MB</div></div>
+        </div>
+      </div>
+
+      <!-- row 2 -->
+      <div class="net" style="left:350px;top:294px">
+        <span class="nlabel"><span class="nkind">NET</span>guacamole_default</span>
+        <div class="inode app"><div class="ih"><span class="dot up pulse"></span><span class="inm">guacamole-web</span><span class="itt">Java</span></div><div class="im"><span class="ring2" style="--p:1;--gc:var(--green)"><span>1</span></span>188MB<span class="open">↗ открыть</span></div></div>
+        <div class="datarow">
+          <div class="inode"><div class="ih"><span class="dot up"></span><span class="inm">guacd</span></div><div class="im">7MB</div></div>
+          <div class="inode"><div class="ih"><span class="dot up"></span><span class="inm">postgres</span></div><div class="im">28MB</div></div>
+        </div>
+      </div>
+
+      <div class="net" style="left:660px;top:294px">
+        <span class="nlabel"><span class="nkind">NET</span>nextcloud_default</span>
+        <div class="inode app"><div class="ih"><span class="dot up pulse"></span><span class="inm">nextcloud</span><span class="itt">PHP</span></div><div class="im"><span class="ring2" style="--p:2;--gc:var(--green)"><span>2</span></span>305MB<span class="open">↗ открыть</span></div></div>
+        <div class="datarow">
+          <div class="inode"><div class="ih"><span class="dot up"></span><span class="inm">nextcloud-db</span></div><div class="im">142MB</div></div>
+        </div>
+      </div>
+
+      <div class="net" style="left:970px;top:294px">
+        <span class="nlabel"><span class="nkind">NET</span>life_dashboard_network</span>
+        <div class="inode app"><div class="ih"><span class="dot up pulse"></span><span class="inm">life-dashboard-api</span><span class="itt">Node</span></div><div class="im"><span class="ring2" style="--p:1;--gc:var(--green)"><span>1</span></span>88MB · этот хост</div></div>
+        <div class="datarow">
+          <div class="inode"><div class="ih"><span class="dot warn"></span><span class="inm">collector</span></div><div class="im">cron /2ч · 09:12</div></div>
+          <div class="inode"><div class="ih"><span class="dot up"></span><span class="inm">frontend</span></div><div class="im">12MB</div></div>
+        </div>
+      </div>
+
+      <!-- host network -->
+      <div class="net host-net" style="left:350px;top:430px">
+        <span class="nlabel"><span class="nkind">NET</span>host · marzneshin</span>
+        <div class="inode app"><div class="ih"><span class="dot up pulse"></span><span class="inm">marzneshin</span><span class="itt">Xray</span></div><div class="im"><span class="ring2" style="--p:0;--gc:var(--green)"><span>0</span></span>105MB<span class="open">↗ открыть</span></div></div>
+        <div class="datarow">
+          <div class="inode"><div class="ih"><span class="dot up"></span><span class="inm">marznode-home</span></div><div class="im">31MB</div></div>
+          <div class="inode"><div class="ih"><span class="dot up"></span><span class="inm">marzneshin-db</span></div><div class="im">48MB</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">парсится из инфры: Docker API (контейнеры + сети + stats) · nginx (URL и маршруты) · Guacamole (VM по RDP/VNC) · Netdata (метрики хоста) · лейблы (назначение/тех) — ┄ зелёный = трафик · ┄ синий = удалёнка · ┄ фиолетовый = мониторинг</div>
+
+</div>
+</body>
+</html>

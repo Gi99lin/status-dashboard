@@ -1,0 +1,27 @@
+/* Design tokens — mirrored 1:1 from life-dashboard / portfolio dark theme.
+   See ../../mockup.html for the visual source of truth. */
+:root {
+  --bg-dim: oklch(13% 0.015 245);
+  --bg0: oklch(16% 0.017 245);
+
+  --green: #59be6c;
+  --aqua: #5dc0a7;
+  --blue: #69aed5;
+  --yellow: #e2c162;
+  --orange: #e99355;
+  --purple: #c88ec3;
+  --red: #e3645e;
+
+  --fg: #eaeff3;
+  --fg-dim: #a3acb3;
+  --fg-muted: #727c84;
+
+  --mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --sans: Inter, system-ui, sans-serif;
+
+  --card-bg: color-mix(in oklch, oklch(100% 0 0) 4%, transparent);
+  --card-border: color-mix(in oklch, oklch(100% 0 0) 9%, transparent);
+  --hair: color-mix(in oklch, oklch(100% 0 0) 8%, transparent);
+
+  --r: 13px;
+}

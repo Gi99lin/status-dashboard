@@ -1,0 +1,167 @@
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  height: 54px;
+  padding: 0 22px;
+  background: color-mix(in oklch, var(--bg-dim) 86%, transparent);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--card-border);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 0.84rem;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.brand .mk {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid color-mix(in oklch, var(--green) 40%, transparent);
+  color: var(--green);
+}
+
+.brand b {
+  color: var(--green);
+}
+
+.nav {
+  display: flex;
+  gap: 3px;
+  margin-left: 8px;
+}
+
+.nav a {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  color: var(--fg-muted);
+  text-decoration: none;
+  padding: 7px 13px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.nav a.active {
+  color: var(--green);
+  border-color: color-mix(in oklch, var(--green) 40%, transparent);
+  background: color-mix(in oklch, var(--green) 11%, transparent);
+}
+
+.nav a.soon {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.nav a .pill {
+  font-size: 0.46rem;
+  border: 1px solid var(--card-border);
+  border-radius: 4px;
+  padding: 1px 4px;
+  color: var(--fg-muted);
+}
+
+.tb-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.host-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--fg-dim);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  padding: 6px 11px;
+  white-space: nowrap;
+}
+
+.host-pill b {
+  color: var(--fg);
+}
+
+.periods {
+  display: flex;
+  gap: 4px;
+}
+
+.pbtn {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--fg-muted);
+  padding: 5px 10px;
+  border: 1px solid var(--card-border);
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.pbtn.active {
+  color: var(--green);
+  border-color: color-mix(in oklch, var(--green) 55%, transparent);
+  background: color-mix(in oklch, var(--green) 12%, transparent);
+}
+
+@media (max-width: 860px) {
+  .topbar {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  .nav {
+    margin-left: 0;
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav a.soon {
+    display: none;
+  }
+
+  .tb-right {
+    margin-left: auto;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 520px) {
+  .host-pill b {
+    display: none;
+  }
+
+  .host-pill {
+    padding: 6px 8px;
+  }
+
+  .periods {
+    gap: 2px;
+  }
+
+  .pbtn {
+    padding: 5px 7px;
+  }
+}

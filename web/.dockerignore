@@ -1,0 +1,6 @@
+node_modules
+dist
+dist-demo
+dist-embed
+npm-debug.log
+.env
