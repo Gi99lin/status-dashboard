@@ -116,15 +116,14 @@ cd ../life-dashboard && docker compose up -d   # re-reads SESSION_SECRET (invali
 ```
 
 **3. NPM — add a custom location on the `dash.gigglin.tech` proxy host.**
-Edit → **Custom locations** → Add location `/stack/api/`, forward to `status-dashboard-api` : `3002`,
-then in that location's gear/Advanced box paste (the rewrite strips the `/stack` prefix):
+Edit → **Custom locations** → Add location `/stack/api/`, Scheme `http`, forward to
+`status-dashboard-api` : `3002`. Then in that location's gear/Advanced box put **only** the rewrite —
+NPM already generates `proxy_pass` from the Forward fields, so do **not** add a second one here
+(a duplicate `proxy_pass` makes nginx invalid → the whole host 525s):
 ```nginx
 rewrite ^/stack/api/(.*)$ /api/$1 break;
-proxy_pass http://status-dashboard-api:3002;
-proxy_set_header Host $host;
-proxy_set_header Cookie $http_cookie;
 ```
-Save. Quick check from the server: `curl -s -o /dev/null -w '%{http_code}' https://dash.gigglin.tech/stack/api/health` → `200`.
+Save. Quick check: `curl -s -o /dev/null -w '%{http_code}' https://dash.gigglin.tech/stack/api/health` → `200`.
 
 **4. Roll out the frontend.** Push `life-dashboard` (rebuilds `life-dashboard-frontend` with
 `VITE_STATUS_MAP_API=/stack` + the embedded bundle). Watchtower redeploys it within ~2 min.
