@@ -90,16 +90,49 @@ Encrypt cert + Force SSL). Forward to the container name on `my_server_proxy_net
 
 **Ship it:** push the three repos, run the three `docker compose up -d` above, add the three NPM hosts.
 
-## Phase B — real status map inside prod (staged)
+## Phase B — real status map inside prod
 
-Touches the live prod dashboard, so do it deliberately:
+The code is done (the infra tab is now the `<status-map>` embed; the bundle ships inside the
+life-dashboard image; prod points it at the same-origin `/stack` path). What's left touches the
+**live** prod dashboard, so run the server steps **in this order** — status-api + NPM route must
+exist *before* the new frontend rolls out, or the infra tab shows an empty map.
 
-1. Deploy the **real** status board internally — `status_dashboard/docker-compose.prod.yml`
-   (`status-dashboard-api` + `status-dashboard-web`, Docker socket mounted, joined to the proxy
-   network, same `DASHBOARD_PASS` + `SESSION_SECRET` as life-dashboard so one login covers both).
-2. In NPM on `dash.gigglin.tech`, add an Advanced custom location routing `/stack/api/` →
-   `status-dashboard-api:3002/api/` and `/stack/embed/` → `status-dashboard-web:80` (so the cookie
-   stays same-origin and the embed bundle loads).
-3. In life-dashboard, replace the existing infra tab (`/api/infra/topology`, `StackTopology.js`)
-   with the `<status-map api="/stack">` embed (`status_dashboard/web` `build:embed` → `status-map.js`).
-4. Verify real topology renders for the authed owner only; demo `infra.gigglin.tech` stays on fake data.
+How it works: the embed polls `/stack/api/topology` on `dash.gigglin.tech`. NPM routes `/stack/api/*`
+to `status-dashboard-api`, which enforces the **same** cookie as life-dashboard-api (shared
+`DASHBOARD_PASS` + `SESSION_SECRET`) — so it's owner-only. On `demo.gigglin.tech` the embed flips to
+fake data by hostname and never calls the backend. The bundle uses **polling, no socket**, so no
+`/socket.io` routing is needed for `/stack`.
+
+**1. Shared secret.** In `~/My_server/.env` set a fixed `SESSION_SECRET` (and confirm `DASHBOARD_PASS`):
+```bash
+openssl rand -hex 32      # paste as SESSION_SECRET=… in ~/My_server/.env
+```
+
+**2. Deploy status-api** (private; Docker socket; shared secrets) and restart life-api to pick up the secret:
+```bash
+cd ~/My_server && git pull
+cd status-dashboard && docker compose up -d
+cd ../life-dashboard && docker compose up -d   # re-reads SESSION_SECRET (invalidates current sessions once)
+```
+
+**3. NPM — add a custom location on the `dash.gigglin.tech` proxy host.**
+Edit → **Custom locations** → Add location `/stack/api/`, forward to `status-dashboard-api` : `3002`,
+then in that location's gear/Advanced box paste (the rewrite strips the `/stack` prefix):
+```nginx
+rewrite ^/stack/api/(.*)$ /api/$1 break;
+proxy_pass http://status-dashboard-api:3002;
+proxy_set_header Host $host;
+proxy_set_header Cookie $http_cookie;
+```
+Save. Quick check from the server: `curl -s -o /dev/null -w '%{http_code}' https://dash.gigglin.tech/stack/api/health` → `200`.
+
+**4. Roll out the frontend.** Push `life-dashboard` (rebuilds `life-dashboard-frontend` with
+`VITE_STATUS_MAP_API=/stack` + the embedded bundle). Watchtower redeploys it within ~2 min.
+
+**5. Verify.** Log in to `dash.gigglin.tech`, open **Инфраструктура** → the real map renders for you
+only (a logged-out `/stack/api/topology` returns 401). `demo.gigglin.tech`'s infra tab keeps showing
+the fake map. Done.
+
+> Keeping the bundle fresh: the embed lives in `life-dashboard/dashboard/public/status-map.js`,
+> built from this repo with `npm run build:embed`. After a status_dashboard change, rebuild and
+> recopy it (`cp dist-embed/status-map.js ../life-dashboard/dashboard/public/`) and push life-dashboard.
