@@ -6,6 +6,7 @@ export function emptyTopology() {
     host: {},
     telemetry: { cpu: [], ram: [], net: [] },
     networks: [],
+    groups: [],
     standalone: [],
     edges: [],
   };
@@ -34,6 +35,35 @@ function techFor(container) {
   if (lower.includes('guacamole')) return 'Java';
   if (lower.includes('node')) return 'Node';
   return image.split(':')[0].split('/').pop() || 'svc';
+}
+
+// Group key for the map's service cards: containers that belong to the same
+// docker-compose project (or share an explicit dashboard.group label) form
+// one card, regardless of which docker network(s) they happen to share.
+// Containers with neither become a single-container group of their own, so
+// every container always lands in exactly one card.
+function projectFor(container) {
+  return container.labels?.['com.docker.compose.project']
+    || container.labels?.['dashboard.group']
+    || container.name;
+}
+
+function buildServiceGroups(containers, routes) {
+  const names = [...new Set(containers.map(projectFor))].sort((a, b) => a.localeCompare(b));
+
+  return names.map((name) => {
+    const members = containers
+      .filter((container) => projectFor(container) === name)
+      .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    const memberNetworks = new Set(members.flatMap((container) => container.networks || []));
+
+    return {
+      name,
+      services: members.map((container) => normalizeService(container, routes)),
+      networks: [...memberNetworks].sort((a, b) => a.localeCompare(b)),
+      driver: memberNetworks.has('host') ? 'host' : 'bridge',
+    };
+  });
 }
 
 function routeFor(routes, serviceName) {
@@ -66,6 +96,7 @@ export function assembleTopology({
   networks = [],
   routes = [],
   vms = [],
+  staticVm = null,
   telemetry = { cpu: [], ram: [], net: [] },
   host = {},
 } = {}) {
@@ -89,6 +120,10 @@ export function assembleTopology({
     };
   }).filter((network) => network.services.length);
 
+  // Map cards: one per docker-compose project / standalone container,
+  // independent of which docker network(s) they share.
+  const groups = buildServiceGroups(containers, routes);
+
   const standalone = [
     { name: 'nginx', role: 'gateway', status: 'running' },
     { name: 'внешние LLM', id: 'external-llm', role: 'external', status: 'running' },
@@ -102,13 +137,25 @@ export function assembleTopology({
       reachable: vm.reachable !== false,
       open: vm.open || process.env.GUAC_URL || '',
     })),
+    // Manual fallback when there's no Guacamole account to query live status
+    // for (see VM_NAME/VM_TECH/VM_URL in collectTopology) — shown as a static
+    // tile with an "unmonitored" dot instead of a real up/down indicator.
+    ...(staticVm ? [{
+      name: staticVm.name,
+      role: 'vm',
+      status: 'unmonitored',
+      tech: (staticVm.tech || 'RDP').toUpperCase(),
+      via: 'guacamole',
+      open: staticVm.open || process.env.GUAC_URL || '',
+    }] : []),
   ];
 
   const edges = [
     { from: 'internet', to: 'nginx', type: 'http' },
-    ...grouped.map((network) => ({ from: 'nginx', to: network.name, type: 'http' })),
+    ...groups.map((group) => ({ from: 'nginx', to: group.name, type: 'http' })),
     ...vms.map((vm) => ({ from: 'guacamole', to: vm.name, type: vm.protocol || 'vnc' })),
-    ...grouped.map((network) => ({ from: 'Netdata', to: network.name, type: 'monitor' })),
+    ...(staticVm ? [{ from: 'guacamole', to: staticVm.name, type: 'rdp' }] : []),
+    ...groups.map((group) => ({ from: 'Netdata', to: group.name, type: 'monitor' })),
   ];
 
   const hasOmni = containers.some((container) => /omni/i.test(container.name || ''));
@@ -132,6 +179,7 @@ export function assembleTopology({
     },
     telemetry,
     networks: grouped,
+    groups,
     standalone,
     edges,
   };
@@ -240,6 +288,23 @@ async function collectTelemetry(getNetdataChart, minutes) {
   }
 }
 
+// Maps Netdata's GET /api/v1/info to the host hardware fields the HostCard
+// shows (vCPU, RAM total, OS). Returns {} (→ "—" in the UI) if unavailable.
+async function collectHostInfo(getNetdataInfo) {
+  if (!getNetdataInfo) return {};
+  try {
+    const info = await getNetdataInfo();
+    if (!info) return {};
+    return {
+      vcpu: info.cores_total,
+      ram_total: info.ram_total ? Math.round(info.ram_total / (1024 ** 3)) : undefined,
+      os: [info.os_name, info.os_version].filter(Boolean).join(' ') || undefined,
+    };
+  } catch {
+    return {};
+  }
+}
+
 async function dockerStats(docker, id, state) {
   if (!docker || state !== 'running') return { cpu: 0, mem: 0 };
   try {
@@ -301,24 +366,33 @@ async function collectDocker(docker) {
   }
 }
 
-export async function collectTopology({ docker, getNetdataChart, minutes = 60 } = {}) {
+export async function collectTopology({ docker, getNetdataChart, getNetdataInfo, minutes = 60 } = {}) {
   try {
-    const [{ containers, networks }, routes, vms, telemetryData] = await Promise.all([
+    const [{ containers, networks }, routes, vms, telemetryData, hostInfo] = await Promise.all([
       collectDocker(docker),
       Promise.resolve(readNginxRoutes()),
       getGuacConnections(),
       collectTelemetry(getNetdataChart, minutes),
+      collectHostInfo(getNetdataInfo),
     ]);
+
+    const staticVm = process.env.VM_NAME ? {
+      name: process.env.VM_NAME,
+      tech: process.env.VM_TECH,
+      open: process.env.VM_URL,
+    } : null;
 
     return assembleTopology({
       containers,
       networks,
       routes,
       vms,
+      staticVm,
       telemetry: telemetryData.telemetry,
       host: {
         name: displayHostName(process.env.HOST_DISPLAY_NAME || process.env.HOSTNAME),
         ...telemetryData.host,
+        ...hostInfo,
       },
     });
   } catch {

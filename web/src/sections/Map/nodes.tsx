@@ -1,6 +1,6 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import type { CSSProperties } from 'react';
-import type { NetworkGroup, Service, StandaloneNode as StandaloneNodeData } from '../../types';
+import type { ServiceGroup, Service, StandaloneNode as StandaloneNodeData } from '../../types';
 import { statusDot, vitalColor } from './statusDot';
 
 const HANDLE_STYLE: CSSProperties = { opacity: 0, width: 1, height: 1, border: 'none', background: 'transparent' };
@@ -33,20 +33,27 @@ function pickPrimary(services: Service[]): Service | undefined {
   return services.find((s) => s.role === 'app' || s.role === 'gateway') || services[0];
 }
 
-export function NetworkNode({ data }: NodeProps & { data: { network: NetworkGroup } }) {
-  const { network } = data;
-  const primary = pickPrimary(network.services);
-  const rest = network.services.filter((s) => s !== primary);
-  const isHost = network.driver === 'host';
-  const label = isHost && primary ? `host · ${primary.name}` : network.name;
+export function ServiceGroupNode({ data }: NodeProps & { data: { group: ServiceGroup } }) {
+  const { group } = data;
+  const primary = pickPrimary(group.services);
+  const rest = group.services.filter((s) => s !== primary);
+  const isHost = group.driver === 'host';
+  const label = isHost && primary ? `host · ${primary.name}` : group.name;
 
   return (
     <div className={`net${isHost ? ' host-net' : ''}`}>
       <Handles />
       <span className="nlabel">
-        <span className="nkind">NET</span>
+        <span className="nkind">SVC</span>
         {label}
       </span>
+      {group.networks.length > 0 && (
+        <div className="nettags">
+          {group.networks.map((net) => (
+            <span className="nettag" key={net}>{net}</span>
+          ))}
+        </div>
+      )}
       {primary && (
         <div className="inode app">
           <div className="ih">

@@ -43,6 +43,16 @@ export interface NetworkGroup {
   services: Service[];
 }
 
+// A map card: containers belonging to the same docker-compose project (or
+// sharing an explicit dashboard.group label), independent of which docker
+// network(s) they happen to share.
+export interface ServiceGroup {
+  name: string;
+  services: Service[];
+  networks: string[];
+  driver: string;
+}
+
 export interface StandaloneNode {
   name: string;
   id?: string;
@@ -65,6 +75,7 @@ export interface Topology {
   host: Host;
   telemetry: Telemetry;
   networks: NetworkGroup[];
+  groups: ServiceGroup[];
   standalone: StandaloneNode[];
   edges: TopologyEdge[];
 }
@@ -95,6 +106,7 @@ export function emptyTopology(): Topology {
     },
     telemetry: { cpu: [], ram: [], net: [] },
     networks: [],
+    groups: [],
     standalone: [],
     edges: [],
   };

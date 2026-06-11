@@ -13,10 +13,10 @@ const EDGE_KIND: Record<string, string> = {
   llm: 'flow',
 };
 
-function findNetworkByServicePattern(topology: Topology, pattern: RegExp): string | null {
-  for (const network of topology.networks) {
-    if (network.services.some((service) => pattern.test(service.name) || pattern.test(service.tech || ''))) {
-      return network.name;
+function findGroupByServicePattern(topology: Topology, pattern: RegExp): string | null {
+  for (const group of topology.groups) {
+    if (group.services.some((service) => pattern.test(service.name) || pattern.test(service.tech || ''))) {
+      return group.name;
     }
   }
   return null;
@@ -31,8 +31,8 @@ export function buildGraph(topology: Topology): { nodes: Node[]; edges: Edge[] }
   const externalLlm = topology.standalone.find((node) => node.id === 'external-llm');
   const vms = topology.standalone.filter((node) => node.role === 'vm');
 
-  const urlCount = topology.networks
-    .flatMap((network) => network.services)
+  const urlCount = topology.groups
+    .flatMap((group) => group.services)
     .filter((service) => service.url).length;
 
   nodes.push({
@@ -53,15 +53,15 @@ export function buildGraph(topology: Topology): { nodes: Node[]; edges: Edge[] }
     });
   }
 
-  topology.networks.forEach((network, index) => {
+  topology.groups.forEach((group, index) => {
     nodes.push({
-      id: `net:${network.name}`,
-      type: 'network',
+      id: `group:${group.name}`,
+      type: 'serviceGroup',
       position: {
         x: GRID_X + (index % GRID_COLS) * (COL_WIDTH + COL_GAP),
         y: 10 + Math.floor(index / GRID_COLS) * ROW_HEIGHT,
       },
-      data: { network },
+      data: { group },
       draggable: true,
       style: { width: 268 },
     });
@@ -109,14 +109,14 @@ export function buildGraph(topology: Topology): { nodes: Node[]; edges: Edge[] }
     if (rawId === 'Netdata') return netdata ? 'netdata' : null;
     if (rawId === 'external-llm') return externalLlm ? 'external-llm' : null;
     if (rawId === 'guacamole') {
-      const name = findNetworkByServicePattern(topology, /guacamole/i);
-      return name ? `net:${name}` : null;
+      const name = findGroupByServicePattern(topology, /guacamole/i);
+      return name ? `group:${name}` : null;
     }
     if (rawId === 'omniroute') {
-      const name = findNetworkByServicePattern(topology, /omni/i);
-      return name ? `net:${name}` : null;
+      const name = findGroupByServicePattern(topology, /omni/i);
+      return name ? `group:${name}` : null;
     }
-    if (topology.networks.some((network) => network.name === rawId)) return `net:${rawId}`;
+    if (topology.groups.some((group) => group.name === rawId)) return `group:${rawId}`;
     if (vms.some((vm) => vm.name === rawId)) return `vm:${rawId}`;
     return null;
   }

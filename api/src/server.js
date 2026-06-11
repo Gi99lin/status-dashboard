@@ -54,6 +54,19 @@ async function getNetdataChart(chart, after = -3600, points = 60) {
   }
 }
 
+async function getNetdataInfo() {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(`${NETDATA_URL}/api/v1/info`, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!res.ok) return null;
+    return await res.json();
+  } catch {
+    return null;
+  }
+}
+
 let snapshotCache = null;
 let snapshotCacheAt = 0;
 let snapshotInFlight = null;
@@ -63,7 +76,7 @@ async function getSnapshot(minutes = 60) {
   if (snapshotCache && now - snapshotCacheAt < SNAPSHOT_TTL_MS) return snapshotCache;
   if (snapshotInFlight) return snapshotInFlight;
 
-  snapshotInFlight = collectTopology({ docker, getNetdataChart, minutes })
+  snapshotInFlight = collectTopology({ docker, getNetdataChart, getNetdataInfo, minutes })
     .then((topology) => {
       snapshotCache = topology;
       snapshotCacheAt = Date.now();

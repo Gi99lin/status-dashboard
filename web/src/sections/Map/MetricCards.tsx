@@ -4,7 +4,7 @@ export function MetricCards({ topology }: { topology: Topology }) {
   const networksCount = topology.networks.length;
 
   const urlCount = [
-    ...topology.networks.flatMap((network) => network.services),
+    ...topology.groups.flatMap((group) => group.services),
     ...topology.standalone,
   ].filter((node) => 'url' in node && node.url).length;
 

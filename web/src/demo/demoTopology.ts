@@ -10,6 +10,7 @@ import type {
   FlatContainer,
   FlatNetwork,
   NetworkGroup,
+  ServiceGroup,
   StandaloneNode,
   Telemetry,
   Topology,
@@ -195,6 +196,12 @@ export function demoTopology(): Topology {
     },
     telemetry: telemetry(),
     networks: NETWORKS.map((n) => ({ ...n, services: jitterServices(n.services) })),
+    groups: NETWORKS.map((n): ServiceGroup => ({
+      name: n.name,
+      services: jitterServices(n.services),
+      networks: [n.name],
+      driver: n.driver,
+    })),
     standalone: STANDALONE,
     edges: EDGES,
   };

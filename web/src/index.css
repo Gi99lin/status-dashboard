@@ -60,6 +60,7 @@ body {
 .dot.up { background: var(--green); }
 .dot.warn { background: var(--yellow); }
 .dot.down { background: var(--red); }
+.dot.mute { background: var(--fg-muted); }
 .dot.pulse { animation: pulse 2s infinite; }
 
 @keyframes pulse {

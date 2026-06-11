@@ -1,8 +1,8 @@
-import { NetworkNode, StandaloneNode } from './nodes';
+import { ServiceGroupNode, StandaloneNode } from './nodes';
 import { TopoEdge } from './edges';
 
 export const nodeTypes = {
-  network: NetworkNode,
+  serviceGroup: ServiceGroupNode,
   standalone: StandaloneNode,
 };
 

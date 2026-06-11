@@ -1,5 +1,6 @@
 export function statusDot(status: string | undefined) {
   const value = (status || '').toLowerCase();
+  if (value === 'unmonitored') return 'mute';
   if (value.includes('run') || value.includes('online') || value.includes('up')) return 'up';
   if (value.includes('exit') || value.includes('dead') || value.includes('down')) return 'down';
   return 'warn';

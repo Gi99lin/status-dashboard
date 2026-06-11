@@ -29,7 +29,7 @@ function savePositions(nodes: Node[]) {
 export function TopologyMap({ topology }: { topology: Topology }) {
   const [nodes, setNodes, onNodesChange] = useNodesState<ReturnType<typeof buildGraph>['nodes'][number]>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<ReturnType<typeof buildGraph>['edges'][number]>([]);
-  const ready = topology.networks.length > 0 || topology.standalone.length > 0;
+  const ready = topology.groups.length > 0 || topology.standalone.length > 0;
 
   useEffect(() => {
     const next = buildGraph(topology);
