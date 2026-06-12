@@ -11,6 +11,7 @@ const EDGE_KIND: Record<string, string> = {
   http: 'flow',
   monitor: 'mon',
   llm: 'flow',
+  network: 'net',
 };
 
 function findGroupByServicePattern(topology: Topology, pattern: RegExp): string | null {
@@ -127,21 +128,33 @@ export function buildGraph(topology: Topology): { nodes: Node[]; edges: Edge[] }
     if (!source || !target || source === target) return;
 
     const kind = EDGE_KIND[edge.type] || 'remote';
-    const isMon = kind === 'mon';
+    // Route by kind so the three edge families don't overlap on the same
+    // handles: monitoring enters from the right, shared-network links run
+    // vertically (bottom→top), everything else (traffic) goes left→right.
+    let sourceHandle = 'source-right';
+    let targetHandle = 'target-left';
+    if (kind === 'mon') {
+      sourceHandle = 'source-left';
+      targetHandle = 'target-right';
+    } else if (kind === 'net') {
+      sourceHandle = 'source-bottom';
+      targetHandle = 'target-top';
+    }
 
     edges.push({
       id: `edge-${index}-${edge.from}-${edge.to}`,
       source,
       target,
-      sourceHandle: isMon ? 'source-left' : 'source-right',
-      targetHandle: isMon ? 'target-right' : 'target-left',
+      sourceHandle,
+      targetHandle,
       type: 'topo',
       data: { kind },
       // React Flow draws edges beneath nodes by default, so connectors that
       // run from nginx into the dense card grid were hidden behind the cards
       // (only edges in open margins, like Netdata's, showed). Elevate edges
-      // above the nodes so every connection is visible.
-      zIndex: 10,
+      // above the nodes so every connection is visible; keep the busy
+      // shared-network mesh just under the traffic/monitor edges.
+      zIndex: kind === 'net' ? 5 : 10,
     });
   });
 

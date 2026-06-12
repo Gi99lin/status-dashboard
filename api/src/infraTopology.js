@@ -66,6 +66,32 @@ function buildServiceGroups(containers, routes) {
   });
 }
 
+// Direct lines between service cards that share a docker network. Single-group
+// networks are skipped (those containers already sit in one card); a pair that
+// shares several networks is linked once. Returns { from, to, type:'network' }.
+function buildNetworkEdges(groups) {
+  const networks = new Set(groups.flatMap((group) => group.networks || []));
+  const seen = new Set();
+  const edges = [];
+
+  for (const network of networks) {
+    if (network === 'host') continue;
+    const members = groups.filter((group) => (group.networks || []).includes(network));
+    if (members.length < 2) continue;
+
+    for (let i = 0; i < members.length; i += 1) {
+      for (let j = i + 1; j < members.length; j += 1) {
+        const key = [members[i].name, members[j].name].sort().join('::');
+        if (seen.has(key)) continue;
+        seen.add(key);
+        edges.push({ from: members[i].name, to: members[j].name, type: 'network', network });
+      }
+    }
+  }
+
+  return edges;
+}
+
 function routeFor(routes, serviceName) {
   // Exact (case-insensitive) match only: an nginx upstream host resolves to
   // one specific container/alias. Substring matching wrongly handed public
@@ -161,6 +187,7 @@ export function assembleTopology({
     ...vms.map((vm) => ({ from: 'guacamole', to: vm.name, type: vm.protocol || 'vnc' })),
     ...(staticVm ? [{ from: 'guacamole', to: staticVm.name, type: 'rdp' }] : []),
     ...groups.map((group) => ({ from: 'Netdata', to: group.name, type: 'monitor' })),
+    ...buildNetworkEdges(groups),
   ];
 
   const hasOmni = containers.some((container) => /omni/i.test(container.name || ''));

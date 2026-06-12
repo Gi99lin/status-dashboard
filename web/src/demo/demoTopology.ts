@@ -180,7 +180,38 @@ function jitterServices(services: NetworkGroup['services']) {
 
 const TOTAL = NETWORKS.reduce((n, net) => n + net.services.length, 0) + 1; // + gateway
 
+// Mirrors buildNetworkEdges() in api/src/infraTopology.js: a direct link
+// between each pair of cards that share a docker network (deduped).
+function networkEdges(groups: ServiceGroup[]): TopologyEdge[] {
+  const networks = new Set(groups.flatMap((g) => g.networks));
+  const seen = new Set<string>();
+  const edges: TopologyEdge[] = [];
+  for (const network of networks) {
+    if (network === 'host') continue;
+    const members = groups.filter((g) => g.networks.includes(network));
+    if (members.length < 2) continue;
+    for (let i = 0; i < members.length; i += 1) {
+      for (let j = i + 1; j < members.length; j += 1) {
+        const key = [members[i].name, members[j].name].sort().join('::');
+        if (seen.has(key)) continue;
+        seen.add(key);
+        edges.push({ from: members[i].name, to: members[j].name, type: 'network' });
+      }
+    }
+  }
+  return edges;
+}
+
 export function demoTopology(): Topology {
+  const groups = NETWORKS.map((n): ServiceGroup => ({
+    name: n.name,
+    services: jitterServices(n.services),
+    // Publicly-routed groups also share the external proxy network — this is
+    // what produces the shared-network links between cards on the map.
+    networks: n.services.some((s) => s.url) ? [n.name, 'my_server_proxy_network'] : [n.name],
+    driver: n.driver,
+  }));
+
   return {
     host: {
       name: 'gigglin-server',
@@ -196,14 +227,9 @@ export function demoTopology(): Topology {
     },
     telemetry: telemetry(),
     networks: NETWORKS.map((n) => ({ ...n, services: jitterServices(n.services) })),
-    groups: NETWORKS.map((n): ServiceGroup => ({
-      name: n.name,
-      services: jitterServices(n.services),
-      networks: [n.name],
-      driver: n.driver,
-    })),
+    groups,
     standalone: STANDALONE,
-    edges: EDGES,
+    edges: [...EDGES, ...networkEdges(groups)],
   };
 }
 
