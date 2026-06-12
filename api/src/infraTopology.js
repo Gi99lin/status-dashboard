@@ -67,11 +67,11 @@ function buildServiceGroups(containers, routes) {
 }
 
 function routeFor(routes, serviceName) {
+  // Exact (case-insensitive) match only: an nginx upstream host resolves to
+  // one specific container/alias. Substring matching wrongly handed public
+  // URLs to sibling containers (e.g. nextcloud-db inheriting nextcloud's URL).
   const clean = String(serviceName || '').toLowerCase();
-  return routes.find((route) => {
-    const upstream = String(route.upstreamHost || '').toLowerCase();
-    return upstream === clean || clean.includes(upstream) || upstream.includes(clean);
-  });
+  return routes.find((route) => String(route.upstreamHost || '').toLowerCase() === clean);
 }
 
 function normalizeService(container, routes) {
