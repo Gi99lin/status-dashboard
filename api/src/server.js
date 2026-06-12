@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import crypto from 'node:crypto';
 import { createServer } from 'node:http';
 import { Server as SocketIOServer } from 'socket.io';
@@ -90,6 +91,7 @@ async function getSnapshot(minutes = 60) {
 }
 
 const app = express();
+app.use(compression());
 app.use(cors());
 app.use(express.json());
 
@@ -123,7 +125,13 @@ app.use('/api', (req, res, next) => {
 app.get('/api/topology', async (req, res) => {
   const minutes = Math.min(Number.parseInt(req.query.minutes, 10) || 60, 1440);
   try {
-    res.json(await getSnapshot(minutes));
+    const snap = await getSnapshot(minutes);
+    // The map only needs the network COUNT (MetricCards); shipping full
+    // services in BOTH networks[] and groups[] doubled the payload (~32KB),
+    // which stalled on the throttled origin→Cloudflare path. Strip services
+    // from networks[] here (/api/containers + /api/networks keep full data).
+    const networks = snap.networks.map(({ services, ...rest }) => rest);
+    res.json({ ...snap, networks });
   } catch (err) {
     console.warn('topology error:', err.message);
     res.json(emptyTopology());
