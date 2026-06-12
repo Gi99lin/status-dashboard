@@ -137,6 +137,11 @@ export function buildGraph(topology: Topology): { nodes: Node[]; edges: Edge[] }
       targetHandle: isMon ? 'target-right' : 'target-left',
       type: 'topo',
       data: { kind },
+      // React Flow draws edges beneath nodes by default, so connectors that
+      // run from nginx into the dense card grid were hidden behind the cards
+      // (only edges in open margins, like Netdata's, showed). Elevate edges
+      // above the nodes so every connection is visible.
+      zIndex: 10,
     });
   });
 
