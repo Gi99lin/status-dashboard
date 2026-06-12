@@ -152,7 +152,12 @@ export function assembleTopology({
 
   const edges = [
     { from: 'internet', to: 'nginx', type: 'http' },
-    ...groups.map((group) => ({ from: 'nginx', to: group.name, type: 'http' })),
+    // nginx only proxies services that have a public URL (an nginx route);
+    // internal-only groups (DBs, workers) aren't behind it, so don't draw
+    // a traffic edge for them.
+    ...groups
+      .filter((group) => group.services.some((service) => service.url))
+      .map((group) => ({ from: 'nginx', to: group.name, type: 'http' })),
     ...vms.map((vm) => ({ from: 'guacamole', to: vm.name, type: vm.protocol || 'vnc' })),
     ...(staticVm ? [{ from: 'guacamole', to: staticVm.name, type: 'rdp' }] : []),
     ...groups.map((group) => ({ from: 'Netdata', to: group.name, type: 'monitor' })),
