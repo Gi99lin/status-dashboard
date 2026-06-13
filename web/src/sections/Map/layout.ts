@@ -3,13 +3,9 @@ import type { ServiceGroup, Topology } from '../../types';
 
 const CARD_W = 250;
 const GAP = 16;
-const BOX_PAD = 18;
-const BOX_LABEL_H = 32;
 const MAIN_X = 360;
 const COL_MAX = 4;
 
-// Network membership is shown by containment (boxes), so 'network' edges are
-// dropped here; the rest keep their colours.
 const EDGE_KIND: Record<string, string> = {
   http: 'flow',
   monitor: 'mon',
@@ -27,11 +23,10 @@ function findGroupByServicePattern(topology: Topology, pattern: RegExp): string 
 
 // Estimate a card's rendered height from how ServiceGroupNode lays out: a
 // header + network tags + the primary container, then the rest in a 2-up
-// wrapping row. Used so masonry packing never overlaps cards.
+// wrapping row. Names no longer wrap (CSS ellipsis), so this is a reliable
+// upper bound used to pack cards without overlapping.
 function cardHeight(group: ServiceGroup): number {
   const restRows = Math.ceil(Math.max(0, group.services.length - 1) / 2);
-  // header + up-to-two-row network tags + primary, then 2-up rest rows.
-  // Names no longer wrap (CSS ellipsis), so this is a reliable upper bound.
   return 128 + restRows * 54;
 }
 
@@ -65,73 +60,21 @@ export function buildGraph(topology: Topology): { nodes: Node[]; edges: Edge[] }
     .flatMap((group) => group.services)
     .filter((service) => service.url).length;
 
-  // Networks shared by 2+ cards become boxes; single-card networks stay tags.
-  const netCount = new Map<string, number>();
-  for (const group of topology.groups) {
-    for (const network of group.networks) {
-      if (network !== 'host') netCount.set(network, (netCount.get(network) ?? 0) + 1);
-    }
-  }
-  const boxNets = [...netCount.entries()]
-    .filter(([, count]) => count >= 2)
-    .sort((a, b) => b[1] - a[1])
-    .map(([network]) => network);
-
-  // Each card goes in the largest shared-network box it belongs to.
-  const boxMembers = new Map<string, ServiceGroup[]>(boxNets.map((n) => [n, []]));
-  const freeGroups: ServiceGroup[] = [];
-  for (const group of topology.groups) {
-    const box = boxNets.find((network) => group.networks.includes(network));
-    if (box) boxMembers.get(box)!.push(group);
-    else freeGroups.push(group);
-  }
-
-  const groupNode = (group: ServiceGroup, x: number, y: number): Node => ({
-    id: `group:${group.name}`,
-    type: 'serviceGroup',
-    position: { x, y },
-    data: { group },
-    draggable: true,
-    style: { width: CARD_W },
-    zIndex: 1,
-  });
-
-  let y = 20;
-  let maxW = CARD_W;
-
-  for (const network of boxNets) {
-    const members = boxMembers.get(network)!;
-    if (!members.length) continue;
-    const cols = Math.min(COL_MAX, members.length);
-    const grid = masonry(members, cols, MAIN_X + BOX_PAD, y + BOX_LABEL_H);
-    const boxW = grid.width + BOX_PAD * 2;
-    const boxH = grid.height + BOX_LABEL_H + BOX_PAD;
-
+  const cols = Math.max(1, Math.min(COL_MAX, topology.groups.length));
+  const grid = masonry(topology.groups, cols, MAIN_X, 20);
+  for (const { card, x, y } of grid.placed) {
     nodes.push({
-      id: `netbox:${network}`,
-      type: 'networkBox',
-      position: { x: MAIN_X, y },
-      data: { label: network, count: members.length },
-      style: { width: boxW, height: boxH },
-      draggable: false,
-      selectable: false,
-      zIndex: 0,
+      id: `group:${card.name}`,
+      type: 'serviceGroup',
+      position: { x, y },
+      data: { group: card },
+      draggable: true,
+      style: { width: CARD_W },
     });
-    for (const { card, x, y: cy } of grid.placed) nodes.push(groupNode(card, x, cy));
-
-    maxW = Math.max(maxW, boxW);
-    y += boxH + 40;
   }
+  const maxW = Math.max(CARD_W, grid.width);
 
-  if (freeGroups.length) {
-    const cols = Math.min(COL_MAX, freeGroups.length);
-    const grid = masonry(freeGroups, cols, MAIN_X, y);
-    for (const { card, x, y: cy } of grid.placed) nodes.push(groupNode(card, x, cy));
-    maxW = Math.max(maxW, grid.width);
-    y += grid.height;
-  }
-
-  const midY = Math.max(240, Math.round(y / 2));
+  const midY = Math.max(240, Math.round(grid.height / 2));
   nodes.push({
     id: 'internet',
     type: 'standalone',
@@ -205,7 +148,7 @@ export function buildGraph(topology: Topology): { nodes: Node[]; edges: Edge[] }
   }
 
   topology.edges.forEach((edge, index) => {
-    if (edge.type === 'network') return; // shown as boxes, not lines
+    if (edge.type === 'network') return;
     const source = resolveId(edge.from);
     const target = resolveId(edge.to);
     if (!source || !target || source === target) return;

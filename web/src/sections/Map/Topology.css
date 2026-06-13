@@ -84,27 +84,6 @@
 .ring2::before { content: ""; position: absolute; width: 15px; height: 15px; border-radius: 50%; background: var(--bg-dim); }
 .ring2 span { position: relative; }
 
-.netbox {
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-  border: 1px dashed color-mix(in oklch, var(--blue) 38%, transparent);
-  border-radius: 16px;
-  background: color-mix(in oklch, var(--blue) 5%, transparent);
-}
-.netbox-label {
-  position: absolute; top: -10px; left: 16px;
-  display: flex; align-items: center; gap: 6px;
-  font-family: var(--mono); font-size: .56rem; letter-spacing: .06em; color: var(--blue);
-  background: var(--bg-dim); padding: 2px 9px;
-  border: 1px solid color-mix(in oklch, var(--blue) 32%, transparent); border-radius: 6px;
-}
-.netbox-kind { opacity: .6; }
-.netbox-count {
-  font-size: .5rem; color: var(--fg-muted);
-  border: 1px solid var(--card-border); border-radius: 4px; padding: 0 5px;
-}
-
 .net {
   width: 100%;
   border: 1px dashed color-mix(in oklch, var(--blue) 32%, transparent);
