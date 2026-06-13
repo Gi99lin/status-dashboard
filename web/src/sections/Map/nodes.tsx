@@ -20,6 +20,18 @@ function Handles() {
   );
 }
 
+export function NetworkBoxNode({ data }: NodeProps & { data: { label: string; count: number } }) {
+  return (
+    <div className="netbox">
+      <span className="netbox-label">
+        <span className="netbox-kind">NET</span>
+        {data.label}
+        <span className="netbox-count">{data.count}</span>
+      </span>
+    </div>
+  );
+}
+
 function Ring({ value }: { value: number }) {
   const pct = Math.max(0, Math.min(100, Math.round(value)));
   return (
