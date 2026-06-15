@@ -37,6 +37,12 @@
   color: var(--green);
 }
 
+.login-brand .mk-img {
+  display: block;
+  width: 24px;
+  height: 24px;
+}
+
 .login-brand b {
   color: var(--green);
 }

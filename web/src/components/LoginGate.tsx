@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import './LoginGate.css';
+import { Brand } from './Brand';
 
 export function LoginGate({ onLogin }: { onLogin: (password: string) => Promise<boolean> }) {
   const [password, setPassword] = useState('');
@@ -19,9 +20,7 @@ export function LoginGate({ onLogin }: { onLogin: (password: string) => Promise<
   return (
     <div className="login-screen">
       <form className="panel login-box" onSubmit={handleSubmit}>
-        <div className="login-brand">
-          <span className="mk">◇</span> stack<b>.map</b>
-        </div>
+        <Brand className="login-brand" />
         <span className="lbl">вход</span>
         <input
           className="login-input"

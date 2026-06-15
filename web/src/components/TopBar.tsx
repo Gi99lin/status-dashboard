@@ -1,4 +1,5 @@
 import './TopBar.css';
+import { Brand } from './Brand';
 
 export type Section = 'map' | 'containers' | 'networks' | 'services';
 
@@ -24,9 +25,7 @@ interface TopBarProps {
 export function TopBar({ active, onSelect, hostName, hostUptime, period, onPeriodChange }: TopBarProps) {
   return (
     <header className="topbar">
-      <div className="brand">
-        <span className="mk">◇</span> stack<b>.map</b>
-      </div>
+      <Brand className="brand" />
       <nav className="nav">
         {NAV_ITEMS.map((item) => (
           <a
