@@ -4,7 +4,7 @@ title: Оболочка приложения: топбар, навигация, 
 status: draft
 source: web/src/App.tsx, web/src/components/TopBar.tsx + живое приложение в demo-режиме, 2026-09-16
 entry_points: / (верхняя панель на всех разделах)
-related: map-overview, containers-table, networks-table, services-placeholder
+related: auth-login
 code_paths: web/src/App.tsx, web/src/components/TopBar.tsx, web/src/components/Brand.tsx
 updated: 2026-09-16
 ---
