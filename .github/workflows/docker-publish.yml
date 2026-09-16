@@ -3,6 +3,13 @@ name: Publish Docker images
 on:
   push:
     branches: [ "main", "master" ]
+    # Документация не попадает в образы — пуш только с документацией сборку не запускает.
+    # Если в пуше есть хоть один другой файл, workflow отработает как обычно.
+    paths-ignore:
+      - 'docs/**'
+      - '**/*.md'
+      - 'LICENSE'
+      - '.gitignore'
 
 env:
   REGISTRY: ghcr.io
